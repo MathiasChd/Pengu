@@ -25,7 +25,7 @@ This extension provides the following configurations:
 
 ## Contribute and contact the author
 
-The project is hosted on Github at: <https://github.com/phindle/error-lens>. Submit suggestions, bug reports, pull requests, etc. here.
+The project is hosted on Github at: <https://github.com/martin-clz/PenguHelpMe>. Submit suggestions, bug reports, pull requests, etc. here.
 
 ## Known issues
 
