@@ -1,46 +1,51 @@
-from pickle import PUT
-from unicodedata import name
-from webbrowser import get
-from flask import Flask, escape, request, render_template, url_for 
+# Importamos las librerias
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from flask import Flask, request
+from sklearn.svm import SVC
+from sklearn.feature_extraction.text import TfidfVectorizer
+from imblearn.over_sampling import RandomOverSampler
 
+#funcion para balancear los datos
+def balancear_data(data):
+    random_data_generator = RandomOverSampler()
+    data_balanceada, data_balanceada['definicion_amigable'] = random_data_generator.fit_resample(data[['definicion_error']],data['definicion_amigable'])
+    return data_balanceada
 
+#definir la locacion del dataset
+url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT-Sp5FOBNtydEtxQqSf-GDGD8skbrocUOXgO-mU-P0yI4hRj4TcVFKzjyNGLskWS9Snfe1i_6bdj8Q/pub?gid=0&single=true&output=csv"
+
+#cargar el dataset 
+dataset = pd.read_csv(url)
+
+#balancear los datos
+balanced_data = balancear_data(dataset)
+
+#Separamos el dataset en train y test
+data_train, data_test, = train_test_split(balanced_data, test_size=0.3, random_state=7)
+data_train_x, data_train_y = data_train['definicion_error'], data_train['definicion_amigable']
+data_test_x, data_test_y = data_test['definicion_error'], data_test['definicion_amigable']
+
+#vectorizacion de datos
+tfidf = TfidfVectorizer(stop_words='english')
+vector_train_x = tfidf.fit_transform(data_train_x)
+vector_test_x = tfidf.transform(data_test_x)
+
+#generacion de modelo SVM
+svc = SVC()
+svc.fit(vector_train_x, data_train_y)
+
+def transform_error(validacion):
+    resultado  = svc.predict(tfidf.transform([validacion]))
+    return resultado
 
 app = Flask(__name__)
-
-@app.route('/')
-def home():
-   return '¡Hola Mundo!'
-
 @app.route('/procesar',methods = ['PUT'])
 def procesar_datos():
     request_data = request.get_json()
     validacion = request_data['validacion']
-    #Funcion para obtener el equivalente del error
-    if validacion == 'can only concatenate str (not "int") to str':
-        return 'Intente concatenar (unir) un valor que no sea un str con un int. Str: string cadenas de texto que van entre comillas. Int: numeros enteros'
-    elif validacion == 'invalid syntax':
-        return 'Intente no utilizar palabras clave de Python como nombres de variables. Las palabras claves son las palabras predefinidas que no pueden ser utilizadas para nombrar cualquier variable, función, clase, etc.'
-    elif validacion == 'unexpected EOF while parsing':
-        return 'Hay un error en la estructura o sintaxis de su código.'
-    elif validacion == "SyntaxError: unmatched ')'":
-        return 'Este error es porque su codigo cuenta con un parentesis faltante de cierre.'
-    elif validacion == 'NameError: name "xxxx" is not defined':
-        return 'Este error es porque se intenta imprimir una variable que no esta definida. '
-    elif validacion == "SyntaxError: can't assign to function call":
-        return 'Asegúrese de utilizar la sintaxis correcta para declarar una variable. El nombre de la variable viene primero, seguido de un signo igual, seguido del valor que desea asignar a la variable.'
-    elif validacion == "SyntaxError: can't assign to literal":
-        return 'Asegúrese de que los nombres de sus variables sean nombres en lugar de valores.'
-    elif validacion == 'IndentationError: unexpected indent':
-        return 'Uso incorrecto de la sangría. Recuerde que el aumento en la sangría solo se usa después de que la declaración termina con:, y luego debe volver al formato de sangría anterior.'
-    elif validacion == 'SyntaxError: EOL while scanning string literal':
-        return 'Olvidar agregar comillas al principio y al final de la cadena.'
-    elif validacion == "AttributeError: 'str' object has no attribute 'lowerr":
-        return 'El nombre del método está mal escrito.'
-    elif validacion == 'IndexError: list index out of range':
-        return 'La referencia excede el índice máximo de la lista.'
-    else:
-        return 'Error no encontrado'
-
-
+    resultado_machine_learning = transform_error(validacion)
+    return resultado_machine_learning[0]
+    
 if __name__ == '__main__':
    app.run(host='0.0.0.0', port=8000, debug=True)
