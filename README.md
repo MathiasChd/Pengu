@@ -8,7 +8,7 @@ This improves the user's experience and understanding the errors and invites to 
 
 • Lines with errors are clearly identified in the dialog box.
 • The description of the errors is expressed in such a way that the user can make the corrections without stopping using the Visual Code.
-• Pengu constantly learns about errors and returns the most favorable answer for the user with an accuracy of 80.46%.
+• Pengu constantly learns about errors and returns the most favorable answer for the user with an accuracy of 89%.
 
 ## Requirements
 
